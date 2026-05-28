@@ -1,0 +1,29 @@
+name: Run Daily Warehouse Report
+
+on:
+  schedule:
+    # This triggers the script every day at 5:00 AM UTC (adjust hour if needed for your timezone!)
+    - cron: '0 5 * * *'
+  workflow_dispatch: # This gives you a manual "Play" button on GitHub to test it anytime
+
+jobs:
+  run-python:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas google-auth-oauthlib google-api-python-client
+
+      - name: Run automation script
+        env:
+          GMAIL_TOKEN: ${{ secrets.GMAIL_TOKEN }}
+          GMAIL_CREDENTIALS: ${{ secrets.GMAIL_CREDENTIALS }}
+        run: python "step 2.py"
