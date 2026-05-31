@@ -1,9 +1,7 @@
 import os
 import base64
-import json
 import pandas as pd
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -16,16 +14,19 @@ creds_data = os.environ.get('GMAIL_CREDENTIALS')
 
 if token_data and creds_data:
     # Recreate the json files temporarily inside GitHub's cloud container
+    print("Cloud keys detected. Authenticating...")
     with open('token.json', 'w') as f:
         f.write(token_data)
     with open('credentials.json', 'w') as f:
         f.write(creds_data)
     creds = Credentials.from_authorized_user_file('token.json')
 else:
-    # Fallback to local files if you try running inside PyCharm
+    # Local PC fallback rule
+    print("No cloud keys found. Falling back to local files...")
     if os.path.exists('token.json'):
         creds = Credentials.from_authorized_user_file('token.json')
     else:
+        from google_auth_oauthlib.flow import InstalledAppFlow
         SCOPES = ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.send']
         flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
         creds = flow.run_local_server(port=0, prompt='consent')
@@ -48,7 +49,7 @@ else:
             attachment_id = part['body'].get('attachmentId')
             attachment = service.users().messages().attachments().get(
                 userId='me', messageId=msg['id'], id=attachment_id).execute()
-
+            
             file_data = base64.urlsafe_b64decode(attachment['data'].encode('UTF-8'))
             with open('raw_report.csv', 'wb') as f:
                 f.write(file_data)
